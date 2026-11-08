@@ -15,7 +15,7 @@
             padding: 0;
             background-color: #eef2f5;
             color: #333;
-            overflow-x: hidden; /* मोबाइल में स्क्रीन को दाईं-बाईं ओर हिलने से रोकेगा */
+            overflow-x: hidden;
         }
         
         /* एडवांस्ड हेडर */
@@ -33,7 +33,7 @@
             font-weight: 700;
             letter-spacing: 1px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
-            white-space: nowrap; /* नाम को हमेशा एक लाइन में फिक्स रखेगा */
+            white-space: nowrap;
         }
         header p {
             margin: 10px 0 0 0;
@@ -42,7 +42,7 @@
             font-weight: 500;
         }
         
-        /* आपका नाम दिखाने का प्रीमियम बैज */
+        /* आदित्य का क्रेडिट बैज */
         .credit-badge {
             font-size: 1em;
             margin-top: 25px;
@@ -102,6 +102,12 @@
             border-bottom: 3px solid #e2e8f0;
         }
 
+        /* फेड-इन एनिमेशन */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* नोटिस आइटम */
         .notice-item {
             padding: 25px;
@@ -109,6 +115,7 @@
             background-color: #ffffff;
             border-left: 5px solid #e74c3c;
             transition: all 0.3s ease;
+            animation: fadeIn 0.6s ease-out forwards; /* नया एनिमेशन जुड़ा है */
         }
         .notice-item:hover {
             background-color: #f8fafc;
@@ -139,6 +146,15 @@
             font-weight: 500;
         }
 
+        /* लोडिंग इफ़ेक्ट */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #64748b;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
         /* फुटर */
         footer {
             text-align: center;
@@ -151,10 +167,10 @@
             border-top: 1px solid #e2e8f0;
         }
 
-        /* 📱 मोबाइल स्क्रीन के लिए 100% सेफ ऑटो-एडजस्ट सेटिंग */
+        /* मोबाइल स्क्रीन सेटिंग */
         @media screen and (max-width: 600px) {
             header h1 {
-                font-size: 5.5vw; /* यह फोन की चौड़ाई के हिसाब से अक्षर को खुद छोटा-बड़ा करेगा */
+                font-size: 5.5vw;
             }
             .credit-badge {
                 font-size: 0.85em;
@@ -188,29 +204,11 @@
         </div>
 
         <div class="notice-board-container">
-            
             <h2 class="board-header">📌 Notice Board</h2>
-
-            <!-- 
-            ======================================================================
-            👇 नया नोटिस कैसे डालें (How to add a new notice) 👇
             
-            जब भी आपको कोई नया नोटिस डालना हो, तो नीचे दिए गए 4 लाइनों के कोड को कॉपी करें 
-            और ठीक इसी जगह (इस बॉक्स के नीचे और पहले नोटिस के ऊपर) पेस्ट कर दें:
-
-            <div class="notice-item">
-                <div class="notice-date">Date: यहाँ नई तारीख लिखें</div>
-                <p class="notice-text">यहाँ अपना नया नोटिस लिखें...</p>
-            </div>
-            ======================================================================
-            -->
-
-            <!-- पहला नोटिस -->
-            <div class="notice-item">
-                <div class="notice-date">Date: 8 November 2026</div>
-                <p class="notice-text">
-                    अभी स्कूल 17 तारीख तक बंद है। 18 तारीख से स्कूल अपने निर्धारित समय पर खुलेगा। सभी छात्र अपनी पढ़ाई जारी रखें।
-                </p>
+            <!-- यहाँ गूगल शीट से नोटिस लोड होंगे -->
+            <div id="notice-board">
+                <div class="loading">⏳ नोटिस लोड हो रहे हैं...</div>
             </div>
 
         </div>
@@ -219,6 +217,47 @@
     <footer>
         &copy; 2026 Class 11th - Saraswati Vidya Niketan | Managed by Aditya Kumar
     </footer>
+
+    <!-- Google Sheet से डाटा लाने वाली स्क्रिप्ट -->
+    <script>
+        // आपका दिया हुआ TSV लिंक
+        const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTmKnZ7slJw82mk4f698wPuXHrCkAFZVAehomsGANYjhCRHXMBNvg0yUQuiGCnwQjELkLVKifrlLdDh/pub?gid=0&single=true&output=tsv";
+
+        fetch(sheetUrl)
+        .then(response => response.text())
+        .then(data => {
+            const rows = data.split('\n');
+            let html = "";
+            let noticeCount = 0;
+
+            // लूप उल्टा चल रहा है (सबसे नया नोटिस सबसे ऊपर दिखाने के लिए)
+            for(let i = rows.length - 1; i >= 1; i--) {
+                if(rows[i].trim() === "") continue; 
+                
+                let columns = rows[i].split('\t'); 
+                if(columns.length < 2) continue; // अगर कोई खाली कॉलम हो तो उसे छोड़ दे
+
+                let date = columns[0];
+                let notice = columns[1];
+
+                html += `<div class="notice-item">
+                            <div class="notice-date">Date: ${date}</div>
+                            <p class="notice-text">${notice}</p>
+                         </div>`;
+                noticeCount++;
+            }
+            
+            // अगर शीट पूरी खाली हो (हेडिंग के अलावा कुछ न हो)
+            if(noticeCount === 0) {
+                html = "<div class='notice-item'><p class='notice-text'>अभी कोई नया नोटिस नहीं है।</p></div>";
+            }
+            
+            document.getElementById("notice-board").innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById("notice-board").innerHTML = "<div class='loading'>⚠️ नोटिस लोड करने में समस्या आ रही है। अपना इंटरनेट कनेक्शन चेक करें।</div>";
+        });
+    </script>
 
 </body>
 </html>
